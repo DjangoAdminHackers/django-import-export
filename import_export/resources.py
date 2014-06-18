@@ -253,7 +253,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         data = []
         dmp = diff_match_patch()
         for field in self.get_fields():
-            v1 = self.export_field(field, original) if original else ""
+            v1 = self.export_field(field, original) if (original and original.pk) else ""
             v2 = self.export_field(field, current) if current else ""
             diff = dmp.diff_main(force_text(v1), force_text(v2))
             dmp.diff_cleanupSemantic(diff)

@@ -1,8 +1,19 @@
 Changelog for django-import-export
 ==================================
 
-0.2.3 (unreleased)
+0.2.4 (unreleased)
 ------------------
+
+- Improve error messages
+
+- FIX: Properly handle NullBoleanField (#115) - Backward Incompatible Change
+  previously None values were handled as false
+
+
+0.2.3 (2014-07-01)
+------------------
+
+- Add separator and field keyword arguments to ManyToManyWidget
 
 - FIX: No support for dates before 1900 (#93)
 

@@ -125,7 +125,10 @@ class DateTimeWidget(Widget):
         return datetime.strptime(value, self.format)
 
     def render(self, value):
-        return value.strftime(self.format)
+        try:
+            return value.strftime(self.format)
+        except:
+            return datetime_safe.new_datetime(value).strftime(self.format)
 
 
 class ForeignKeyWidget(Widget):

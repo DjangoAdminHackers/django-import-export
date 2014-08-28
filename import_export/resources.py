@@ -356,6 +356,17 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                         self._meta.report_skipped):
                 result.rows.append(row_result)
 
+        try:
+            self.after_import(dataset, real_dry_run)
+        except Exception as e:
+            tb_info = traceback.format_exc(sys.exc_info()[2])
+            result.base_errors.append(Error(repr(e), tb_info))
+            if raise_errors:
+                if use_transactions:
+                    transaction.rollback()
+                    transaction.leave_transaction_management()
+                raise
+
         if use_transactions:
             if dry_run or result.has_errors():
                 transaction.rollback()
@@ -364,6 +375,12 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             transaction.leave_transaction_management()
 
         return result
+
+    def after_import(self, dataset, dry_run):
+        """
+        Override to add additional logic.
+        """
+        pass
 
     def get_export_order(self):
         return self._meta.export_order or self.fields.keys()

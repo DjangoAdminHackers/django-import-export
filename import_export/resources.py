@@ -13,6 +13,7 @@ from django.utils.datastructures import SortedDict
 from django.utils import six
 from django.db import transaction
 from django.db.models.fields import FieldDoesNotExist
+from django.db.models.query import QuerySet
 from django.db.models.related import RelatedObject
 from django.conf import settings
 
@@ -304,7 +305,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         try:
             self.before_import(dataset, real_dry_run)
         except Exception as e:
-            tb_info = traceback.format_exc(sys.exc_info()[2])
+            tb_info = traceback.format_exc(2)
             result.base_errors.append(Error(repr(e), tb_info))
             if raise_errors:
                 if use_transactions:
@@ -407,9 +408,14 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             queryset = self.get_queryset()
         headers = self.get_export_headers()
         data = tablib.Dataset(headers=headers)
-        # Iterate without the queryset cache, to avoid wasting memory when
-        # exporting large datasets.
-        for obj in queryset.iterator():
+
+        if isinstance(queryset, QuerySet):
+            # Iterate without the queryset cache, to avoid wasting memory when
+            # exporting large datasets.
+            iterable = queryset.iterator()
+        else:
+            iterable = queryset
+        for obj in iterable:
             data.append(self.export_resource(obj))
         return data
 

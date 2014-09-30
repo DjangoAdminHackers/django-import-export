@@ -1,8 +1,23 @@
 Changelog for django-import-export
 ==================================
 
-0.2.4 (unreleased)
+0.2.5 (unreleased)
 ------------------
+
+- implement export as an admin action (#124)
+
+
+0.2.4 (2014-09-18)
+------------------
+
+- fix: get_value raised attribute error on model method call
+
+- Fixed XLS import on python 3. Optimized loop
+
+- Fixed properly skipping row marked as skipped when importing data from 
+  the admin interface.
+  
+- Allow Resource.export to accept iterables as well as querysets
 
 - Improve error messages
 

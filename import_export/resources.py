@@ -9,7 +9,6 @@ import tablib
 from diff_match_patch import diff_match_patch
 
 from django.utils.safestring import mark_safe
-from django.utils.datastructures import SortedDict
 from django.utils import six
 from django.db import transaction
 from django.db.models.fields import FieldDoesNotExist
@@ -30,6 +29,10 @@ try:
 except ImportError:
     from django.utils.encoding import force_unicode as force_text
 
+try:
+    from collections import OrderedDict
+except ImportError:
+    from django.utils.datastructures import SortedDict as OrderedDict
 
 USE_TRANSACTIONS = getattr(settings, 'IMPORT_EXPORT_USE_TRANSACTIONS', False)
 
@@ -103,7 +106,7 @@ class DeclarativeMetaclass(type):
                     field.column_name = field_name
                 declared_fields.append((field_name, field))
 
-        attrs['fields'] = SortedDict(declared_fields)
+        attrs['fields'] = OrderedDict(declared_fields)
         new_class = super(DeclarativeMetaclass, cls).__new__(cls, name,
                 bases, attrs)
         opts = getattr(new_class, 'Meta', None)
@@ -287,6 +290,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             back.
         """
         result = Result()
+        result.diff_headers = self.get_diff_headers()
 
         if use_transactions is None:
             use_transactions = self.get_use_transactions()
@@ -341,7 +345,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                         self.save_instance(instance, real_dry_run)
                         self.save_m2m(instance, row, real_dry_run)
                         # Add object info to RowResult for LogEntry
-                        row_result.object_repr = str(instance)
+                        row_result.object_repr = force_text(instance)
                         row_result.object_id = instance.pk
                     row_result.diff = self.get_diff(original, instance,
                             real_dry_run)
@@ -448,7 +452,7 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                     readonly=False)
                 field_list.append((f.name, field, ))
 
-            new_class.fields.update(SortedDict(field_list))
+            new_class.fields.update(OrderedDict(field_list))
 
             #add fields that follow relationships
             if opts.fields is not None:
@@ -474,9 +478,12 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                             # We're not at the last attribute yet, so check that
                             # we're looking at a relation, and move on to the
                             # next model.
-                            if f.rel is None:
-                                raise KeyError('%s is not a relation' % verbose_path)
-                            model = f.rel.to
+                            if isinstance(f, RelatedObject):
+                                model = f.model
+                            else:
+                                if f.rel is None:
+                                    raise KeyError('%s is not a relation' % verbose_path)
+                                model = f.rel.to
 
                     if isinstance(f, RelatedObject):
                         f = f.field
@@ -485,7 +492,7 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                         readonly=True)
                     field_list.append((field_name, field))
 
-                new_class.fields.update(SortedDict(field_list))
+                new_class.fields.update(OrderedDict(field_list))
 
         return new_class
 
@@ -568,3 +575,4 @@ def modelresource_factory(model, resource_class=ModelResource):
 
     metaclass = ModelDeclarativeMetaclass
     return metaclass(class_name, (resource_class,), class_attrs)
+

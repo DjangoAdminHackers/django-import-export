@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import os.path
 
+from django.test.utils import override_settings
 from django.test.testcases import TestCase
 from django.contrib.auth.models import User
 from django.utils.translation import ugettext_lazy as _
@@ -29,7 +30,15 @@ class ImportExportAdminIntegrationTest(TestCase):
         self.assertContains(response, _('Import'))
         self.assertContains(response, _('Export'))
 
+    @override_settings(TEMPLATE_STRING_IF_INVALID='INVALID_VARIABLE')
     def test_import(self):
+        # GET the import form
+        response = self.client.get('/admin/core/book/import/')
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'admin/import_export/import.html')
+        self.assertContains(response, 'form action=""')
+
+        # POST the import form
         input_format = '0'
         filename = os.path.join(
             os.path.dirname(__file__),
@@ -64,6 +73,7 @@ class ImportExportAdminIntegrationTest(TestCase):
         response = self.client.post('/admin/core/book/export/', data)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.has_header("Content-Disposition"))
+        self.assertEqual(response['Content-Type'], 'text/csv')
 
     def test_import_export_buttons_visible_without_add_permission(self):
         # issue 38 - Export button not visible when no add permission

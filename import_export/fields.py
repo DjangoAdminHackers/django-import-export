@@ -57,7 +57,7 @@ class Field(object):
 
         try:
             value = self.widget.clean(value)
-        except Exception as e:
+        except SyntaxError as e:
             if str(e).startswith('Invalid literal for Decimal: u'):
                 raise ValueError("Column '%s': invalid literal for Decimal: '%s'" %
                     (self.column_name, value))

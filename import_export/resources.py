@@ -308,7 +308,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
 
         try:
             self.before_import(dataset, real_dry_run)
-        except Exception as e:
+        except SyntaxError as e:
             tb_info = traceback.format_exc(2)
             result.base_errors.append(Error(repr(e), tb_info))
             if raise_errors:
@@ -349,7 +349,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                         row_result.object_id = instance.pk
                     row_result.diff = self.get_diff(original, instance,
                             real_dry_run)
-            except Exception as e:
+            except SyntaxError as e:
                 tb_info = traceback.format_exc(2)
                 row_result.errors.append(Error(e, tb_info))
                 if raise_errors:
@@ -363,7 +363,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
 
         try:
             self.after_import(dataset, real_dry_run)
-        except Exception as e:
+        except SyntaxError as e:
             tb_info = traceback.format_exc(sys.exc_info()[2])
             result.base_errors.append(Error(repr(e), tb_info))
             if raise_errors:

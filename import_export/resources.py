@@ -34,8 +34,14 @@ try:
 except ImportError:
     from django.utils.datastructures import SortedDict as OrderedDict
 
-USE_TRANSACTIONS = getattr(settings, 'IMPORT_EXPORT_USE_TRANSACTIONS', False)
+try:
+    from django.db.models.related import RelatedObject
+except ImportError:
+    # From Django 1.8 RelatedObject is replaced by ForeignObjectRel
+    from django.db.models.fields.related import ForeignObjectRel
+    RelatedObject = ForeignObjectRel
 
+USE_TRANSACTIONS = getattr(settings, 'IMPORT_EXPORT_USE_TRANSACTIONS', False)
 
 class ResourceOptions(object):
     """
